@@ -159,6 +159,87 @@ class pdo_class {
         ));
         $req->closeCursor();
     }
+    
+    public function ReturnEventID($titre) {
+        $req = $this->bdd->prepare("SELECT ID FROM EVENT WHERE Titre = :titre");
+        $req->execute(array(
+            "titre" => $titre
+        ));
+        $id = $req->fetch();
+        
+        if($id) {
+            $req->closeCursor();
+            return intval($id["ID"]);
+        } else {
+            $req->closeCursor();
+            return 0;
+        }
+    }
+    
+    public function getThreeEvent() {
+        $req = $this->bdd->prepare("SELECT ID, Titre, Localisation, Description FROM EVENT LIMIT 3");
+        $req->execute();
+        
+        while($chk = $req->fetch()) {
+            $data[] = $chk;
+        }
+        
+        $req->closeCursor();
+        return $data;
+    }
+    
+    public function RetrieveOwnEvent($id) {
+        //var_dump($id);
+        $req = $this->bdd->prepare("SELECT EVENT.ID, EVENT.Titre, EVENT.Localisation, EVENT.Description FROM EVENT INNER JOIN EVENT_USER ON EVENT.ID = EVENT_USER.ID_EVENT WHERE EVENT_USER.ID_USER = :id");
+        $req->execute(array("id" => $id));
+        while($evt = $req->fetch()) {
+            $ev[] = $evt;
+        }
+        $req->closeCursor();
+        return $ev;
+    }
+    
+    public function retrieveIDTraffic($data) {
+        $req = $this->bdd->prepare("SELECT ID FROM TYPE_INFO WHERE TypeInfo = :type");
+        $req->execute(array(
+            "type" => $data
+        ));
+        $idtr = $req->fetch();
+        
+        if ($idtr) {
+            var_dump($idtr['ID']);
+            $req->closeCursor();
+            return intval($idtr['ID']);
+        }
+    }
+    
+    public function RetrieveTraffic($id) {
+        $req = $this->bdd->prepare("SELECT TYPE_INFO.TypeInfo FROM TYPE_INFO INNER JOIN EVENT_INFO INNER JOIN EVENT ON TYPE_INFO.ID = EVENT_INFO.ID_INFO WHERE EVENT.ID = :id");
+        $req->execute(array(
+            "id" => $id
+        ));
+        while($data = $req->fetch()){
+            $traf[] = $data["TypeInfo"];
+        }
+        $req->closeCursor();
+        return $traf;
+    }
+    
+    public function UpdateTraffic($id, $infotraffic) {
+        for($i = 0; $i < count($infotraffic); $i++) {
+            $req = $this->bdd->prepare("INSERT INTO TYPE_INFO (TypeInfo) VALUES (:data)");
+            $req->execute(array("data" => htmlspecialchars($infotraffic[$i])));
+            $req->closeCursor();
+            $idt = $this->retrieveIDTraffic($infotraffic[$i]);
+            //var_dump($idt);
+            $req = $this->bdd->prepare("INSERT INTO EVENT_INFO (ID_EVENT, ID_INFO) VALUES (:ide, :idi)");
+            $req->execute(array(
+                "ide" => $id, 
+                "idi" => intval($idt)
+            ));
+            $req->closeCursor();
+        }
+    }
 }
 
 ?>

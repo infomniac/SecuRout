@@ -28,7 +28,9 @@
     session_start();
     require_once 'do/bdd.php';
     require_once 'do/form.php';
+    require_once 'do/formEvent.php';
     $form = new form();
+    $formev = new formEvent();
     $user = new pdo_class();
     
     
@@ -42,13 +44,53 @@
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-
+    <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDGy_Q8g81qZKcwU7fznXUFS5-5JpJC0G0&callback=initMap">
+    </script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+    <script src="js/maps.js"></script>
+    <script src="js/custom_form.js"></script>
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="css/style.css" media="all"/>
   </head>
   <body>
     
     <?PHP
+    
+        if(isset($_SESSION['id']) && !empty($_SESSION['id']) && $_SESSION['id'] > 0) {
+            if(isset($_GET['createevent'])) {
+                $formev->AddEvent();
+            }
+            if(isset($_GET['manageevent'])) {
+                $formev->ManageEvent($user->RetrieveOwnEvent($_SESSION['id']));
+            }
+            
+            if(isset($_GET['edit-event']) && intval($_GET['edit-event']) > 0) {
+                $formev->EditEvent(intval($_GET['edit-event']));
+            }
+            
+            if(isset($_GET['uptraf']) && intval($_GET['ev']) > 0) {
+                $user->UpdateTraffic(intval($_GET['ev']), $_POST['traffic']);
+                header("Location:index.php");
+            }
+            
+            if(isset($_GET['event']) && !empty($_GET['event'])) {
+                if(intval($_GET['event']) > 0) {
+                    $idevent = intval($_GET['event']);
+                    $data = $user->getThreeEvent();
+                    $form->manageEvent($data, $data[$idevent-1]['Titre'], $data[$idevent-1]['Description'], $user->RetrieveTraffic($idevent));
+                }
+            }
+            if(isset($_GET['ajouter'])) {
+                if(isset($_POST['titre']) && isset($_POST['adr']) && isset($_POST['ville']) && isset($_POST['cp'])) {
+                    if(!empty($_POST['titre']) && !empty($_POST['adr']) && !empty($_POST['ville']) && !empty($_POST['cp'])) {
+                        $user->CreateEvent($_POST['titre'], $_POST['adr']." ".$_POST['adrcompl'].", ".$_POST['cp']." ".$_POST['ville'], $_POST['desc']);
+                        $user->JoinEvent($_SESSION['id'], $user->ReturnEventID(htmlspecialchars($_POST['titre'])), 1);
+                    }
+                }
+            }
+        }
     
         if(isset($_SESSION['id']) && !empty($_SESSION['id']) && $_SESSION['id'] > 0) {
             if(isset($_POST['pseudo']) && isset($_POST['prenom']) && isset($_POST['nom']) && isset($_POST['date'])) {
@@ -70,7 +112,9 @@
                     $form->finishAcct($data);
                     break;
                 case 0:
-                    $form->manageEvent();
+                    if(!isset($_GET['createevent']) && !isset($_GET['manageevent']) && !isset($_GET['edit-event']) && !isset($_GET['event'])) {
+                        $form->manageEvent($user->getThreeEvent(), "Gestionnaire de soirée", "Bonne visite ! Bonne soirée !", " ");
+                    }
                     break;
                 case -1:
                     session_abort();
