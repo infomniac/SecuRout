@@ -127,6 +127,37 @@ class pdo_class {
             "date" => date($data[3]),
             "id" => $id
         ));
+        $req->closeCursor();
+    }
+    
+    public function CreateEvent($titre, $local, $desc) {
+        $req = $this->bdd->prepare("INSERT INTO EVENT (Titre, Localisation, Description) VALUES (:titre, :localisation, :desc)");
+        $req->execute(array(
+            "titre" => htmlspecialchars($titre),
+            "localisation" => htmlspecialchars($local),
+            "desc" => htmlspecialchars($desc)
+        ));
+        $req->closeCursor();
+    }
+    
+    public function UpdateEvent($id, $titre, $local, $desc) {
+        $req = $this->bdd->prepare("UPDATE EVENT SET Titre = :titre, Localisation = :loca, Description = :desc WHERE ID = :id");
+        $req->execute(array(
+            "titre" => htmlspecialchars($titre),
+            "localisation" => htmlspecialchars($local),
+            "desc" => htmlspecialchars($desc),
+            "id" => htmlspecialchars($id)
+        ));
+    }
+    
+    public function JoinEvent($idU, $idE, $idT) {
+        $req = $this->bdd->prepare("INSERT INTO EVENT_USER (ID_USER, ID_EVENT, ID_TYPE) VALUES (:idu, :ide, :idt)");
+        $req->execute(array(
+            "idu" => htmlspecialchars(intval($idU)),
+            "ide" => htmlspecialchars(intval($idE)),
+            "idt" => htmlspecialchars(intval($idT))
+        ));
+        $req->closeCursor();
     }
 }
 
